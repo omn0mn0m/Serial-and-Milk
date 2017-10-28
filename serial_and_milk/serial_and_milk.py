@@ -25,6 +25,10 @@ def read_com_port(com_port, com_queue):
         # Flushing any prior content within serial buffers
         ser.reset_input_buffer()
         ser.reset_output_buffer()
+
+        # Getting rid of weird looking data
+        for i in range(10):
+            ser.readline()
         
         while True:
             try:
@@ -64,7 +68,9 @@ def update_labels(nmea_var, time_var, lat_var, long_var, alt_var):
 
 if __name__ == '__main__':
     
-    com_port = raw_input("Enter a COM port to listen to: ")
+    #com_port = raw_input("Enter a COM port to listen to: ")
+    port_file = open("port.txt", "r")
+    com_port = port_file.read()
     
     p = multiprocessing.Process(target=read_com_port, args=(com_port,com_queue,))
     p.start()
