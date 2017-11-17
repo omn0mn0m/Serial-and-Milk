@@ -102,7 +102,7 @@ if __name__ == '__main__':
     
     #com_port = raw_input("Enter a COM port to listen to: ")
     port_file = open("port.txt", "r")
-    com_port = port_file.read()
+    com_port = port_file.read().strip()
     
     p = multiprocessing.Process(target=read_com_port, args=(com_port,com_queue,))
     p.start()
