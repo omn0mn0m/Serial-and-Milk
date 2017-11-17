@@ -39,8 +39,8 @@ def read_com_port(com_port, com_queue):
                     if (ser.isOpen() == False):
                         ser.open()
                         
-                    raw_sentence = ser.readline().decode('ascii', errors = 'replace') # Reads serial data
-                        
+                    raw_sentence = ser.readline().decode('ascii', errors = 'replace').strip('[]') # Reads serial data
+                    print raw_sentence
                     telemetry = pynmea2.parse(raw_sentence) # Parses data
                         
                     while not com_queue.empty():
