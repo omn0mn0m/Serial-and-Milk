@@ -23,7 +23,7 @@ logging.basicConfig(filename='telemetry.log', format='%(asctime)s %(message)s', 
 logging.debug("-------------- Start of Log -----------------------")
 
 def read_com_port(com_port, com_queue):
-    if (com_port == "---"):
+    if not (com_port == "---"):
         with serial.Serial(com_port, baudrate = 9600, timeout = 0.5) as ser:
             
             # Flushing any prior content within serial buffers
@@ -39,29 +39,24 @@ def read_com_port(com_port, com_queue):
                     if (ser.isOpen() == False):
                         ser.open()
                         
-                        raw_sentence = ser.readline().decode('ascii', errors = 'replace') # Reads serial data
+                    raw_sentence = ser.readline().decode('ascii', errors = 'replace') # Reads serial data
                         
-                        telemetry = pynmea2.parse(raw_sentence) # Parses data
+                    telemetry = pynmea2.parse(raw_sentence) # Parses data
                         
-                        while not com_queue.empty():
-                            com_queue.get_nowait()
+                    while not com_queue.empty():
+                        com_queue.get_nowait()
                             
-                        com_queue.put(telemetry)
-                        
-                        logging.info("%s\n", telemetry)
+                    com_queue.put(telemetry)
+                    
+                    logging.info("%s\n", telemetry)
                 except Exception as e:
                     print e
                     ser.close()                # Closes the serial port
 
 def read_from_queue():
-    passes = 0
-    
-    while com_queue.empty() and (passes < 1000):
-        passes = passes + 1
-
-    if passes == 1000:
-        return None
-    
+    while com_queue.empty():
+        pass
+            
     return com_queue.get()
 
 def update_labels(nmea_var, time_var, lat_var, long_var, alt_var):
