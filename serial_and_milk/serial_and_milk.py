@@ -48,20 +48,20 @@ def read_com_port(com_port, com_queue):
                         
                     raw_sentence = raw_sentence.decode('ascii', errors='replace').strip('[]')
                     
-                    #raw_sentence = ser.readline().decode('ascii', errors = 'replace').strip('[]') # Reads serial data
-                    
                     print raw_sentence
-                    telemetry = pynmea2.parse(raw_sentence) # Parses data
+                    try:
+                        telemetry = pynmea2.parse(raw_sentence) # Parses data
+                    except:
+                        telemetry = raw_sentence
+                        
+                    logging.info("%s\n", telemetry)
                         
                     while not com_queue.empty():
                         com_queue.get_nowait()
                             
                     com_queue.put(telemetry)
-                    
-                    logging.info("%s\n", telemetry)
                 except Exception as e:
                     print e
-                    ser.close()                # Closes the serial port
 
 def read_from_queue():
     while com_queue.empty():
@@ -73,13 +73,19 @@ def update_labels(nmea_var, time_var, lat_var, long_var, alt_var):
     telemetry = read_from_queue()
 
     if not telemetry == None:
-        data_time = telemetry.timestamp
-        
         nmea_var.set(telemetry)
-        time_var.set(data_time.strftime("%X"))
-        lat_var.set(telemetry.latitude)
-        long_var.set(telemetry.longitude)
-        alt_var.set(telemetry.altitude)
+        
+        try:
+            data_time = telemetry.timestamp
+            time_var.set(data_time.strftime("%X"))
+            lat_var.set(telemetry.latitude)
+            long_var.set(telemetry.longitude)
+            alt_var.set(telemetry.altitude)
+        except:
+            time_var.set("error")
+            lat_var.set("error")
+            long_var.set("error")
+            alt_var.set("error")
 
 def load_nmea_gui(master, menubar):
     Label(master, text='Raw NMEA').pack(pady=5,padx=50)
@@ -106,7 +112,7 @@ def load_nmea_gui(master, menubar):
     telemetry_menu.add_command(label = "Save Telemetry Log", command = do_nothing)
     menubar.add_cascade(label = "Telemetry", menu = telemetry_menu)
 
-    master.after(100, update_labels, nmea_val, time_val, latitude_val, longitude_val, altitude_val)
+    master.after(10, update_labels, nmea_val, time_val, latitude_val, longitude_val, altitude_val)
 
 if __name__ == '__main__':
     
