@@ -9,14 +9,14 @@ import logging
 from Tkinter import *
 import tkMessageBox
 
-com_queue = multiprocessing.Queue()
+TIMEOUT = 10
 
 def do_nothing():
     pass
 
 def print_nmea(telemetry):
-    print "Latitude: {}".format(telemetry.latitude)
-    print "Longitude: {}".format(telemetry.longitude)
+    print "Latitude: {} ".format(telemetry.latitude)
+    print "Longitude: {} ".format(telemetry.longitude)
     print "Altitude: {}\n".format(telemetry.altitude)
 
 logging.basicConfig(filename='telemetry.log', format='%(asctime)s %(message)s', level=logging.DEBUG)
@@ -47,14 +47,14 @@ def read_com_port(com_port, com_queue):
                         message_byte = ser.read()
                         
                     raw_sentence = raw_sentence.decode('ascii', errors='replace').strip('[]')
-                    
                     print raw_sentence
+                    
                     try:
                         telemetry = pynmea2.parse(raw_sentence) # Parses data
                     except:
                         telemetry = raw_sentence
                         
-                    logging.info("%s\n", telemetry)
+                    logging.info("%s", telemetry)
                         
                     while not com_queue.empty():
                         com_queue.get_nowait()
@@ -62,14 +62,34 @@ def read_com_port(com_port, com_queue):
                     com_queue.put(telemetry)
                 except Exception as e:
                     print e
+                    break
 
+read_timeout = 0
+                    
 def read_from_queue():
     while com_queue.empty():
-        pass
-            
+        global read_timeout
+        
+        if read_timeout > TIMEOUT:
+            print "Queue empty..."
+            read_timeout = 0
+            return None
+        
+        read_timeout += 1
+        print read_timeout
+
+    read_timeout = 0
     return com_queue.get()
 
-def update_labels(nmea_var, time_var, lat_var, long_var, alt_var):
+def start_serial_read():
+    port_file = open("port.txt", "r")
+    com_port = port_file.read().strip()
+
+    com_queue = multiprocessing.Queue()
+    p = multiprocessing.Process(target=read_com_port, args=(com_port,com_queue,))
+    p.start()
+
+def update_labels(master, nmea_var, time_var, lat_var, long_var, alt_var):
     telemetry = read_from_queue()
 
     if not telemetry == None:
@@ -87,7 +107,38 @@ def update_labels(nmea_var, time_var, lat_var, long_var, alt_var):
             long_var.set("error")
             alt_var.set("error")
 
-def load_nmea_gui(master, menubar):
+    master.after(1000, update_labels, master, nmea_val, time_val, latitude_val, longitude_val, altitude_val)
+
+if __name__ == '__main__':
+    port_file = open("port.txt", "r")
+    com_port = port_file.read().strip()
+
+    com_queue = multiprocessing.Queue()
+    p = multiprocessing.Process(target=read_com_port, args=(com_port,com_queue,))
+    p.start()
+    
+    master = Tk()
+    master.title("Serial and Milk - Telemetry Mode")
+    master.geometry("720x320")
+
+    menubar = Menu(master)
+    
+    file_menu = Menu(menubar, tearoff = 0)
+    file_menu.add_command(label = "New", command = do_nothing)
+    file_menu.add_command(label = "Open", command = do_nothing)
+    file_menu.add_command(label = "Save", command = do_nothing)
+    file_menu.add_separator()
+    file_menu.add_command(label = "Change Port", command = do_nothing)
+    file_menu.add_command(label = "Reset Serial", command = start_serial_read)
+    file_menu.add_separator()
+    file_menu.add_command(label = "Exit", command = master.quit)
+
+    help_menu = Menu(menubar, tearoff = 0)
+    help_menu.add_command(label = "About", command = do_nothing)
+    help_menu.add_command(label = "GitHub", command = do_nothing)
+    
+    menubar.add_cascade(label = "File", menu = file_menu)
+
     Label(master, text='Raw NMEA').pack(pady=5,padx=50)
     nmea_val = StringVar()
     Label(master, textvariable=nmea_val).pack(pady=5, padx=50)
@@ -108,44 +159,7 @@ def load_nmea_gui(master, menubar):
     altitude_val = StringVar()
     Label(master, textvariable=altitude_val).pack(pady=5, padx=50)
 
-    telemetry_menu = Menu(menubar, tearoff = 0)
-    telemetry_menu.add_command(label = "Save Telemetry Log", command = do_nothing)
-    menubar.add_cascade(label = "Telemetry", menu = telemetry_menu)
-
-    master.after(10, update_labels, nmea_val, time_val, latitude_val, longitude_val, altitude_val)
-
-if __name__ == '__main__':
-    
-    #com_port = raw_input("Enter a COM port to listen to: ")
-    port_file = open("port.txt", "r")
-    com_port = port_file.read().strip()
-    
-    p = multiprocessing.Process(target=read_com_port, args=(com_port,com_queue,))
-    p.start()
-    
-    master = Tk()
-    master.title("Serial and Milk - Telemetry Mode")
-    master.geometry("720x320")
-
-    menubar = Menu(master)
-    
-    file_menu = Menu(menubar, tearoff = 0)
-    file_menu.add_command(label = "New", command = do_nothing)
-    file_menu.add_command(label = "Open", command = do_nothing)
-    file_menu.add_command(label = "Save", command = do_nothing)
-    file_menu.add_separator()
-    file_menu.add_command(label = "Change Port", command = do_nothing)
-    file_menu.add_separator()
-    file_menu.add_command(label = "Exit", command = master.quit)
-
-    help_menu = Menu(menubar, tearoff = 0)
-    help_menu.add_command(label = "About", command = do_nothing)
-    help_menu.add_command(label = "GitHub", command = do_nothing)
-    
-    menubar.add_cascade(label = "File", menu = file_menu)
-    
-
-    load_nmea_gui(master, menubar)
+    master.after(1000, update_labels, master, nmea_val, time_val, latitude_val, longitude_val, altitude_val)
 
     menubar.add_cascade(label = "Help", menu = help_menu)
     master.config(menu = menubar)
@@ -156,3 +170,4 @@ if __name__ == '__main__':
     com_queue.close()
     com_queue.join_thread()
     p.terminate()
+    logging.debug("\n")
