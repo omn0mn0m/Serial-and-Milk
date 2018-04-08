@@ -89,25 +89,48 @@ def start_serial_read():
     p = multiprocessing.Process(target=read_com_port, args=(com_port,com_queue,))
     p.start()
 
-def update_labels(master, nmea_var, time_var, lat_var, long_var, alt_var):
-    telemetry = read_from_queue().strip('[]')
+def update_labels(master, nmea_val, time_val, lat_val, long_val, alt_val):
+    telemetry = read_from_queue()
 
     if not telemetry == None:
-        nmea_var.set(telemetry)
+        nmea_val.set(telemetry)
         
         try:
             data_time = telemetry.timestamp
-            time_var.set(data_time.strftime("%X"))
-            lat_var.set(telemetry.latitude)
-            long_var.set(telemetry.longitude)
-            alt_var.set(telemetry.altitude)
+            time_val.set(data_time.strftime("%X"))
+            lat_val.set(telemetry.latitude)
+            long_val.set(telemetry.longitude)
+            alt_val.set(telemetry.altitude)
         except:
-            time_var.set("error")
-            lat_var.set("error")
-            long_var.set("error")
-            alt_var.set("error")
+            time_val.set("error")
+            lat_val.set("error")
+            long_val.set("error")
+            alt_val.set("error")
 
-    master.after(1000, update_labels, master, nmea_val, time_val, latitude_val, longitude_val, altitude_val)
+    master.after(1000, update_labels, master, nmea_val, time_val, lat_val, long_val, alt_val)
+
+def load_telemetry(master, nmea_val, time_val, lat_val, long_val, alt_val):
+    Label(master, text='Raw NMEA').pack(pady=5,padx=50)
+    
+    Label(master, textvariable=nmea_val).pack(pady=5, padx=50)
+
+    Label(master, text='Time Stamp').pack(pady=5,padx=50)
+    
+    Label(master, textvariable=time_val).pack(pady=5, padx=50)
+
+    Label(master, text='Latitude').pack(pady=5,padx=50)
+    
+    Label(master, textvariable=lat_val).pack(pady=5, padx=50)
+    
+    Label(master, text='Longitude').pack(pady=5,padx=50)
+    
+    Label(master, textvariable=long_val).pack(pady=5, padx=50)
+    
+    Label(master, text='Altitude').pack(pady=5,padx=50)
+    
+    Label(master, textvariable=alt_val).pack(pady=5, padx=50)
+
+    master.after(1000, update_labels, master, nmea_val, time_val, lat_val, long_val, alt_val)
     
 
 if __name__ == '__main__':
@@ -140,27 +163,13 @@ if __name__ == '__main__':
     
     menubar.add_cascade(label = "File", menu = file_menu)
 
-    Label(master, text='Raw NMEA').pack(pady=5,padx=50)
     nmea_val = StringVar()
-    Label(master, textvariable=nmea_val).pack(pady=5, padx=50)
-
-    Label(master, text='Time Stamp').pack(pady=5,padx=50)
     time_val = StringVar()
-    Label(master, textvariable=time_val).pack(pady=5, padx=50)
+    lat_val = StringVar()
+    long_val = StringVar()
+    alt_val = StringVar()
 
-    Label(master, text='Latitude').pack(pady=5,padx=50)
-    latitude_val = StringVar()
-    Label(master, textvariable=latitude_val).pack(pady=5, padx=50)
-    
-    Label(master, text='Longitude').pack(pady=5,padx=50)
-    longitude_val = StringVar()
-    Label(master, textvariable=longitude_val).pack(pady=5, padx=50)
-    
-    Label(master, text='Altitude').pack(pady=5,padx=50)
-    altitude_val = StringVar()
-    Label(master, textvariable=altitude_val).pack(pady=5, padx=50)
-
-    master.after(1000, update_labels, master, nmea_val, time_val, latitude_val, longitude_val, altitude_val)
+    load_telemetry(master, nmea_val, time_val, lat_val, long_val, alt_val)
 
     menubar.add_cascade(label = "Help", menu = help_menu)
     master.config(menu = menubar)
