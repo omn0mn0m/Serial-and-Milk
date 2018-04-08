@@ -76,7 +76,7 @@ def read_from_queue():
             return None
         
         read_timeout += 1
-        print read_timeout
+#        print read_timeout
 
     read_timeout = 0
     return com_queue.get()
@@ -90,7 +90,7 @@ def start_serial_read():
     p.start()
 
 def update_labels(master, nmea_var, time_var, lat_var, long_var, alt_var):
-    telemetry = read_from_queue()
+    telemetry = read_from_queue().strip('[]')
 
     if not telemetry == None:
         nmea_var.set(telemetry)
@@ -108,6 +108,7 @@ def update_labels(master, nmea_var, time_var, lat_var, long_var, alt_var):
             alt_var.set("error")
 
     master.after(1000, update_labels, master, nmea_val, time_val, latitude_val, longitude_val, altitude_val)
+    
 
 if __name__ == '__main__':
     port_file = open("port.txt", "r")
