@@ -168,12 +168,12 @@ if __name__ == '__main__':
     help_menu.add_command(label = "GitHub", command = do_nothing)
     
     menubar.add_cascade(label = "File", menu = file_menu)
+    menubar.add_cascade(label = "Help", menu = help_menu)
+    
+    master.config(menu = menubar)
 
     load_telemetry(master)
-
-    menubar.add_cascade(label = "Help", menu = help_menu)
-    master.config(menu = menubar)
-   
+    
     master.mainloop()
 
     # Handling closing multiprocessing stuff
