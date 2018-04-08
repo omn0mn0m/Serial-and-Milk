@@ -109,7 +109,13 @@ def update_labels(master, nmea_val, time_val, lat_val, long_val, alt_val):
 
     master.after(1000, update_labels, master, nmea_val, time_val, lat_val, long_val, alt_val)
 
-def load_telemetry(master, nmea_val, time_val, lat_val, long_val, alt_val):
+def load_telemetry(master):
+    nmea_val = StringVar()
+    time_val = StringVar()
+    lat_val = StringVar()
+    long_val = StringVar()
+    alt_val = StringVar()
+    
     Label(master, text='Raw NMEA').pack(pady=5,padx=50)
     
     Label(master, textvariable=nmea_val).pack(pady=5, padx=50)
@@ -163,13 +169,7 @@ if __name__ == '__main__':
     
     menubar.add_cascade(label = "File", menu = file_menu)
 
-    nmea_val = StringVar()
-    time_val = StringVar()
-    lat_val = StringVar()
-    long_val = StringVar()
-    alt_val = StringVar()
-
-    load_telemetry(master, nmea_val, time_val, lat_val, long_val, alt_val)
+    load_telemetry(master)
 
     menubar.add_cascade(label = "Help", menu = help_menu)
     master.config(menu = menubar)
