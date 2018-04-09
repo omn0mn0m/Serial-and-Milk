@@ -2,6 +2,7 @@ import logging
 import pynmea2               # For reading NMEA 0183 sentences
 
 from Tkinter import *
+from ttk import Notebook
 import tkMessageBox
 
 class Telemetry_Plugin:
@@ -78,19 +79,26 @@ class Telemetry_Plugin:
         long_val = StringVar()
         alt_val = StringVar()
 
-        Label(master, text='Raw NMEA').pack(pady=5,padx=50)
-        Label(master, textvariable=nmea_val).pack(pady=5, padx=50)
+        frame = Frame(master)
 
-        Label(master, text='Time Stamp').pack(pady=5,padx=50)
-        Label(master, textvariable=time_val).pack(pady=5, padx=50)
+        Label(frame, text='Raw NMEA').pack(pady=5,padx=50)
+        Label(frame, textvariable=nmea_val).pack(pady=5, padx=50)
 
-        Label(master, text='Latitude').pack(pady=5,padx=50)
-        Label(master, textvariable=lat_val).pack(pady=5, padx=50)
+        Label(frame, text='Time Stamp').pack(pady=5,padx=50)
+        Label(frame, textvariable=time_val).pack(pady=5, padx=50)
 
-        Label(master, text='Longitude').pack(pady=5,padx=50)
-        Label(master, textvariable=long_val).pack(pady=5, padx=50)
+        Label(frame, text='Latitude').pack(pady=5,padx=50)
+        Label(frame, textvariable=lat_val).pack(pady=5, padx=50)
 
-        Label(master, text='Altitude').pack(pady=5,padx=50)
-        Label(master, textvariable=alt_val).pack(pady=5, padx=50)
+        Label(frame, text='Longitude').pack(pady=5,padx=50)
+        Label(frame, textvariable=long_val).pack(pady=5, padx=50)
+
+        Label(frame, text='Altitude').pack(pady=5,padx=50)
+        Label(frame, textvariable=alt_val).pack(pady=5, padx=50)
+
+        master.add(frame, text="Telemetry")
 
         master.after(1000, self.update_gui, master, nmea_val, time_val, lat_val, long_val, alt_val)
+
+    def close(self):
+        logging.debug("\n")

@@ -4,9 +4,10 @@ import serial                # For reading in a serial device
 import multiprocessing       # For multiprocessing in Python
 
 from Tkinter import *
+from ttk import Notebook
 import tkMessageBox
 
-from telemetry_plugin import Telemetry_Plugin
+from plugins.telemetry_plugin import Telemetry_Plugin
 
 def do_nothing():
     pass
@@ -83,7 +84,10 @@ if __name__ == '__main__':
     
     master.config(menu = menubar)
 
-    telemetry_plugin.load(master)
+    notebook = Notebook(master)
+    notebook.pack(fill=BOTH, expand=1)
+
+    telemetry_plugin.load(notebook)
     
     master.mainloop()
 
@@ -91,4 +95,3 @@ if __name__ == '__main__':
     com_queue.close()
     com_queue.join_thread()
     p.terminate()
-    logging.debug("\n")
