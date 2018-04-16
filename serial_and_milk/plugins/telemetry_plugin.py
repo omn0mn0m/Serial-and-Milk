@@ -1,19 +1,25 @@
 import logging
+import multiprocessing       # For multiprocessing in Python
+
 import pynmea2               # For reading NMEA 0183 sentences
 
 from Tkinter import *
 from ttk import Notebook
 import tkMessageBox
 
-class Telemetry_Plugin:
+class TelemetryPlugin:
     
-    def __init__(self, com_queue):
+    def __init__(self):
         logging.basicConfig(filename='telemetry.log', format='%(asctime)s %(message)s', level=logging.DEBUG)
         logging.debug("-------------- Start of Log -----------------------")
 
         self.com_queue = com_queue
         self.TIMEOUT = 10
         self.read_timeout = 0
+
+        self.com_queue = multiprocessing.Queue()
+        self.p = multiprocessing.Process(target=read_com_port, args=(com_port))
+        self.p.start()
 
     def read_from_queue(self):
         while self.com_queue.empty():
@@ -27,6 +33,34 @@ class Telemetry_Plugin:
 
         self.read_timeout = 0
         return self.com_queue.get()
+
+    def read_com_port(self, com_port):
+        if not (com_port == "---"):
+            with serial.Serial(com_port, baudrate = 9600, timeout = 0.5) as ser:
+                # Flushing any prior content within serial buffers
+                ser.reset_input_buffer()
+                ser.reset_output_buffer()
+
+                # Getting rid of weird looking data
+                for i in range(10):
+                    ser.readline()
+
+                while True:
+                    try:
+                        if (ser.isOpen() == False):
+                            ser.open()
+
+                        message_byte = ser.read()
+
+                        telemetry = self.process_message(ser, message_byte)
+
+                        while not self..com_queue.empty():
+                            self..com_queue.get_nowait()
+
+                        self..com_queue.put(telemetry)
+                    except Exception as e:
+                        print e
+                        break
 
     def process_message(self, ser, message_byte):
         raw_sentence = ''
@@ -67,7 +101,7 @@ class Telemetry_Plugin:
 
         master.after(1000, self.update_gui, master, nmea_val, time_val, lat_val, long_val, alt_val)
 
-    def load(self, master):
+    def load_gui(self, master):
         nmea_val = StringVar()
         time_val = StringVar()
         lat_val = StringVar()
@@ -97,3 +131,8 @@ class Telemetry_Plugin:
 
     def close(self):
         logging.debug("\n")
+        
+        self.com_queue.close()
+        self.com_queue.join_thread()
+
+        self.p.terminate()

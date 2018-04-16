@@ -1,7 +1,6 @@
 from time import sleep       # For delays
 
 import serial                # For reading in a serial device
-import multiprocessing       # For multiprocessing in Python
 
 from Tkinter import *
 from ttk import Notebook
@@ -73,26 +72,14 @@ if __name__ == '__main__':
     notebook.pack(fill=BOTH, expand=1)
 
     # ================ Plugin Setup ====================
-    # Setup plugin processes
-    plugin_list = ['telemetry']
-    plugin_queues = {}
-
-    for plugin in plugin_list:
-        plugin_queues[plugin] = multiprocessing.Queue()
+    telemetry_plugin = TelemetryPlugin()
     
-    telemetry_plugin = Telemetry_Plugin(plugin_queues['telemetry'])
-    p = multiprocessing.Process(target=read_com_port, args=(com_port,telemetry_plugin))
-    p.start()
-
     # Load GUI elemenets of plugins
-    telemetry_plugin.load(notebook)
+    telemetry_plugin.load_gui(notebook)
     # ==================================================
     
     master.mainloop()
 
     # Handling closing multiprocessing stuff
-    for plugin in plugin_list:
-        plugin_queues[plugin].close()
-        plugin_queues[plugin].join_thread()
-        
-    p.terminate()
+    telemetry_plugin.close()
+    
