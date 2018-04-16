@@ -15,11 +15,6 @@ class Telemetry_Plugin:
         self.TIMEOUT = 10
         self.read_timeout = 0
 
-    def print_nmea(self, telemetry):
-        print "Latitude: {} ".format(telemetry.latitude)
-        print "Longitude: {} ".format(telemetry.longitude)
-        print "Altitude: {}\n".format(telemetry.altitude)
-
     def read_from_queue(self):
         while self.com_queue.empty():
             if self.read_timeout > self.TIMEOUT:

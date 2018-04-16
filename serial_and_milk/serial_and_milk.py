@@ -41,23 +41,9 @@ def read_com_port(com_port, telemetry_plugin):
                     print e
                     break
 
-def start_serial_read(telemetry_plugin):
-    port_file = open("port.txt", "r")
-    com_port = port_file.read().strip()
-
-    com_queue = multiprocessing.Queue()
-    p = multiprocessing.Process(target=read_com_port, args=(com_port,telemetry_plugin))
-    p.start()
-
 if __name__ == '__main__':
     port_file = open("port.txt", "r")
     com_port = port_file.read().strip()
-
-    com_queue = multiprocessing.Queue()
-    telemetry_plugin = Telemetry_Plugin(com_queue)
-    
-    p = multiprocessing.Process(target=read_com_port, args=(com_port,telemetry_plugin))
-    p.start()
     
     master = Tk()
     master.title("Serial and Milk")
@@ -71,7 +57,6 @@ if __name__ == '__main__':
     file_menu.add_command(label = "Save", command = do_nothing)
     file_menu.add_separator()
     file_menu.add_command(label = "Change Port", command = do_nothing)
-    file_menu.add_command(label = "Reset Serial", command = lambda: start_serial_read(telemetry_plugin))
     file_menu.add_separator()
     file_menu.add_command(label = "Exit", command = master.quit)
 
@@ -87,11 +72,27 @@ if __name__ == '__main__':
     notebook = Notebook(master)
     notebook.pack(fill=BOTH, expand=1)
 
+    # ================ Plugin Setup ====================
+    # Setup plugin processes
+    plugin_list = ['telemetry']
+    plugin_queues = {}
+
+    for plugin in plugin_list:
+        plugin_queues[plugin] = multiprocessing.Queue()
+    
+    telemetry_plugin = Telemetry_Plugin(plugin_queues['telemetry'])
+    p = multiprocessing.Process(target=read_com_port, args=(com_port,telemetry_plugin))
+    p.start()
+
+    # Load GUI elemenets of plugins
     telemetry_plugin.load(notebook)
+    # ==================================================
     
     master.mainloop()
 
     # Handling closing multiprocessing stuff
-    com_queue.close()
-    com_queue.join_thread()
+    for plugin in plugin_list:
+        plugin_queues[plugin].close()
+        plugin_queues[plugin].join_thread()
+        
     p.terminate()
