@@ -1,50 +1,16 @@
-from time import sleep       # For delays
-
-import serial                # For reading in a serial device
-
 from Tkinter import *
 from ttk import Notebook
 import tkMessageBox
 
-from plugins.telemetry_plugin import Telemetry_Plugin
+from plugins.telemetry_plugin import TelemetryPlugin
+from plugins.plotting_plugin import PlottingPlugin
 
 def do_nothing():
     pass
 
-def read_com_port(com_port, telemetry_plugin):
-    if not (com_port == "---"):
-        with serial.Serial(com_port, baudrate = 9600, timeout = 0.5) as ser:
-            
-            # Flushing any prior content within serial buffers
-            ser.reset_input_buffer()
-            ser.reset_output_buffer()
-            
-            # Getting rid of weird looking data
-            for i in range(10):
-                ser.readline()
-                
-            while True:
-                try:
-                    if (ser.isOpen() == False):
-                        ser.open()
-                    
-                    message_byte = ser.read()
-                    
-                    telemetry = telemetry_plugin.process_message(ser, message_byte)
-                        
-                    while not telemetry_plugin.com_queue.empty():
-                        telemetry_plugin.com_queue.get_nowait()
-                            
-                    telemetry_plugin.com_queue.put(telemetry)
-                except Exception as e:
-                    print e
-                    break
-
 if __name__ == '__main__':
-    port_file = open("port.txt", "r")
-    com_port = port_file.read().strip()
-    
     master = Tk()
+    master.protocol('WM_DELETE_WINDOW', master.quit)
     master.title("Serial and Milk")
     master.geometry("720x320")
 
@@ -72,14 +38,16 @@ if __name__ == '__main__':
     notebook.pack(fill=BOTH, expand=1)
 
     # ================ Plugin Setup ====================
-    telemetry_plugin = TelemetryPlugin()
-    
-    # Load GUI elemenets of plugins
+    telemetry_plugin = TelemetryPlugin(baudrate=9600)
     telemetry_plugin.load_gui(notebook)
+
+    plotting_plugin = PlottingPlugin(baudrate=9600)
+    plotting_plugin.load_gui(notebook)
+    
+    
     # ==================================================
     
     master.mainloop()
-
-    # Handling closing multiprocessing stuff
-    telemetry_plugin.close()
     
+    telemetry_plugin.close(master)
+    plotting_plugin.close()
