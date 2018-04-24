@@ -10,14 +10,15 @@ from plugin import Plugin
 
 class TelemetryPlugin(Plugin):
 
-    def __init__(self, baudrate):
+    def __init__(self, baudrate, out_queue):
         logging.basicConfig(filename='telemetry.log', format='%(asctime)s %(message)s', level=logging.DEBUG)
         logging.debug("-------------- Start of Log -----------------------")
 
         port_file = open("port.txt", "r")
         self.com_port = port_file.read().strip()
 
-        super(TelemetryPlugin, self).__init__(self.com_port, baudrate)
+        in_queue = multiprocessing.Queue()
+        super(TelemetryPlugin, self).__init__(self.com_port, baudrate, in_queue, out_queue)
 
     def process_data(self, raw_data):
         raw_data = raw_data.strip('[]')
@@ -43,6 +44,8 @@ class TelemetryPlugin(Plugin):
                 lat_val.set(telemetry.latitude)
                 long_val.set(telemetry.longitude)
                 alt_val.set(telemetry.altitude)
+                
+                self.out_queue.put(telemetry.altitude)
             except:
                 print "Error"
 

@@ -13,13 +13,15 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.animation as animation
 from matplotlib import style
 
-class PlottingPlugin():
+class PlottingPlugin(Plugin):
 
-    def __init__(self, baudrate):
+    def __init__(self, baudrate, in_queue):
         style.use('ggplot')
         
         self.xar = []
         self.yar = []
+        
+        super(PlottingPlugin, self).__init__("---", baudrate, in_queue)
 
     def process_data(self, raw_data):
         pass
@@ -33,7 +35,6 @@ class PlottingPlugin():
         fig = plt.figure(figsize=(14, 4.5), dpi=100)
 
         self.ax = fig.add_subplot(1,1,1)
-        self.ax.set_ylim(0, 100)
         self.line, = self.ax.plot(self.xar, self.yar)
 
         canvas = FigureCanvasTkAgg(fig, master=frame)
@@ -50,9 +51,12 @@ class PlottingPlugin():
 
     def animate(self, i):
         try:
-            self.yar.append(99-i)
+            temp = self.read_from_queue()
+            ymin,ymax = self.ax.get_ylim()
+            self.yar.append(temp)
             self.xar.append(i)
             self.line.set_data(self.xar, self.yar)
             self.ax.set_xlim(0, i+1)
+            self.ax.set_ylim(0, max(temp, ymax))
         except:
             print "Plotting plugin error"

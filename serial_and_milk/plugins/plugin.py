@@ -3,12 +3,12 @@ import serial                # For reading in a serial device
 
 class Plugin(object):
 
-    def __init__(self, com_port, baudrate):
+    def __init__(self, com_port, baudrate, in_queue=None, out_queue=None):
         self.TIMEOUT = 10
         self.baudrate = baudrate
         self.com_port = com_port
-
-        self.in_queue = multiprocessing.Queue()
+        self.out_queue = out_queue
+        self.in_queue = in_queue
         self.p = multiprocessing.Process(target=self.periodic)
         self.p.start()
 
@@ -28,6 +28,10 @@ class Plugin(object):
             read_timeout += 1
 
         return self.in_queue.get()
+        
+    def write_to_queue(self, value):
+        if not self.out_queue == None:
+            self.out_queue.put(value)
 
     def periodic(self):
         if not (self.com_port == "---"):

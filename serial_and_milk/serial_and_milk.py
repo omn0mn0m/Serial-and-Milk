@@ -1,3 +1,5 @@
+import multiprocessing       # For multiprocessing in Python
+
 from Tkinter import *
 from ttk import Notebook
 import tkMessageBox
@@ -38,10 +40,12 @@ if __name__ == '__main__':
     notebook.pack(fill=BOTH, expand=1)
 
     # ================ Plugin Setup ====================
-    telemetry_plugin = TelemetryPlugin(baudrate=9600)
+    out_queue = multiprocessing.Queue()
+    
+    telemetry_plugin = TelemetryPlugin(baudrate=9600, out_queue=out_queue)
     telemetry_plugin.load_gui(notebook)
 
-    plotting_plugin = PlottingPlugin(baudrate=9600)
+    plotting_plugin = PlottingPlugin(baudrate=9600, in_queue=out_queue)
     plotting_plugin.load_gui(notebook)
     
     
