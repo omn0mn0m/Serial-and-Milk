@@ -1,52 +1,32 @@
 import logging
+import multiprocessing       # For multiprocessing in Python
+import serial                # For reading in a serial device
+
 import pynmea2               # For reading NMEA 0183 sentences
 
 from Tkinter import *
-from ttk import Notebook
-import tkMessageBox
 
-class Telemetry_Plugin:
-    
-    def __init__(self, com_queue):
+from plugin import Plugin
+
+class TelemetryPlugin(Plugin):
+
+    def __init__(self, baudrate, out_queue):
         logging.basicConfig(filename='telemetry.log', format='%(asctime)s %(message)s', level=logging.DEBUG)
         logging.debug("-------------- Start of Log -----------------------")
 
-        self.com_queue = com_queue
-        self.TIMEOUT = 10
-        self.read_timeout = 0
+        port_file = open("port.txt", "r")
+        self.com_port = port_file.read().strip()
 
-    def print_nmea(self, telemetry):
-        print "Latitude: {} ".format(telemetry.latitude)
-        print "Longitude: {} ".format(telemetry.longitude)
-        print "Altitude: {}\n".format(telemetry.altitude)
+        in_queue = multiprocessing.Queue()
+        super(TelemetryPlugin, self).__init__(self.com_port, baudrate, in_queue, out_queue)
 
-    def read_from_queue(self):
-        while self.com_queue.empty():
-            if self.read_timeout > self.TIMEOUT:
-                print "Queue empty..."
-                self.read_timeout = 0
-                return None
-
-            self.read_timeout += 1
-    #        print read_timeout
-
-        self.read_timeout = 0
-        return self.com_queue.get()
-
-    def process_message(self, ser, message_byte):
-        raw_sentence = ''
-        
-        while not (message_byte == '\n'):
-            raw_sentence += message_byte
-            message_byte = ser.read()
-
-        raw_sentence = raw_sentence.decode('ascii', errors='replace').strip('[]')
-        print raw_sentence
+    def process_data(self, raw_data):
+        raw_data = raw_data.strip('[]')
 
         try:
-            telemetry = pynmea2.parse(raw_sentence) # Parses data
+            telemetry = pynmea2.parse(raw_data) # Parses data
         except:
-            telemetry = raw_sentence
+            telemetry = raw_data
 
         logging.info("%s", telemetry)
 
@@ -64,15 +44,14 @@ class Telemetry_Plugin:
                 lat_val.set(telemetry.latitude)
                 long_val.set(telemetry.longitude)
                 alt_val.set(telemetry.altitude)
+                
+                self.out_queue.put(telemetry.altitude)
             except:
-                time_val.set("error")
-                lat_val.set("error")
-                long_val.set("error")
-                alt_val.set("error")
+                print "Error"
 
-        master.after(1000, self.update_gui, master, nmea_val, time_val, lat_val, long_val, alt_val)
+        self.after_id = master.after(1000, self.update_gui, master, nmea_val, time_val, lat_val, long_val, alt_val)
 
-    def load(self, master):
+    def load_gui(self, master):
         nmea_val = StringVar()
         time_val = StringVar()
         lat_val = StringVar()
@@ -98,7 +77,10 @@ class Telemetry_Plugin:
 
         master.add(frame, text="Telemetry")
 
-        master.after(1000, self.update_gui, master, nmea_val, time_val, lat_val, long_val, alt_val)
+        self.after_id = master.after(1000, self.update_gui, master, nmea_val, time_val, lat_val, long_val, alt_val)
 
-    def close(self):
+    def close(self, master):
         logging.debug("\n")
+        
+        master.after_cancel(self.after_id)
+        super(TelemetryPlugin, self).close()
