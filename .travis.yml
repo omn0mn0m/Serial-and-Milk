@@ -8,7 +8,7 @@ install:
 
 # command to run tests
 script:
-  - pytest
+  - pytest --cov
 
 # command to run for coverage report
 after_success:
