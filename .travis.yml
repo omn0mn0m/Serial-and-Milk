@@ -8,7 +8,7 @@ install:
 
 # command to run tests
 script:
-  - pytest --cov=serial_and_milk/
+  - pytest
 
 # command to run for coverage report
 after_success:
