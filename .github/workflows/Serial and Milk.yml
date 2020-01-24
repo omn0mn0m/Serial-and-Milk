@@ -19,7 +19,7 @@ jobs:
         pip install -r requirements.txt
     - name: Run unit tests
       run: |
-        - pip install pytest
+        - pip install pytest pytest-cov
         - pytest --cov
     - name: Upload to Coveralls
       run: |
