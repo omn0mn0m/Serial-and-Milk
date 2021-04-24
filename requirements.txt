@@ -9,7 +9,7 @@ docopt==0.6.2
 enum34==1.1.6
 idna==2.7
 ipaddress==1.0.22
-py==1.4.34
+py==1.10.0
 pycparser==2.18
 pyOpenSSL==18.0.0
 pyserial==3.4
